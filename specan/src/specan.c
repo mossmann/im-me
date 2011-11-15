@@ -21,7 +21,6 @@
 #include "ioCCxx10_bitdef.h"
 #include "display.h"
 #include "keys.h"
-#include "5x7.h"
 #include "stdio.h"
 #include "specan.h"
 #include "pm.h"
