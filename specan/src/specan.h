@@ -80,6 +80,13 @@
 #define NARROW_SPACING    49988
 #define ULTRAWIDE_SPACING 666504
 
+/* display peaks long enough to be seen (don't set higher than 20) */
+#define PERSIST 16
+
+/* power button debouncing for wake from sleep */
+#define DEBOUNCE_COUNT  4
+#define DEBOUNCE_PERIOD 50
+
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))
 
@@ -160,7 +167,7 @@ typedef struct {
 	u8 fscal1;
 
 	/* signal strength */
-	u8 ss;
+	u8 ss[PERSIST];
 	u8 max;
 } channel_info;
 

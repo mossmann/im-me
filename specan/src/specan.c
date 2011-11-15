@@ -38,6 +38,8 @@ bit sleepy;
 u8 vscroll;
 u8 min_chan;
 u8 max_chan;
+u8 sweep;
+u8 persistence;
 
 /* plot one value of bar chart */
 void plot(u8 col) {
@@ -45,15 +47,20 @@ void plot(u8 col) {
 	u8 row;
 	u8 pixels;
 	u8 s, m;
+	u8 i;
+	u8 ss = 0;
+
+	for (i = 0; i < persistence; i++)
+		ss = MAX(chan_table[col].ss[i], ss);
 
 	SSN = LOW;
 	setDisplayStart(0);
 
 	if (height == TALL) {
+		s = MAX((ss - vscroll), 0);
 		m = MAX((chan_table[col].max - vscroll), 0);
-		s = MAX((chan_table[col].ss - vscroll), 0);
 	} else {
-		s = MAX((chan_table[col].ss - vscroll) >> 2, 0);
+		s = MAX((ss - vscroll) >> 2, 0);
 		m = MAX((chan_table[col].max - vscroll) >> 2, 0);
 	}
 
@@ -135,6 +142,11 @@ void draw_freq() {
 		break;
 	}
 
+	if (persistence > 1) {
+		setCursor(7, 126);
+		printf("P");
+	}
+
 	SSN = HIGH;
 }
 
@@ -197,27 +209,27 @@ void set_radio_freq(u32 freq) {
 
 /* freq in Hz */
 void calibrate_freq(u32 freq, u8 ch) {
-		set_radio_freq(freq);
+	set_radio_freq(freq);
 
-		RFST = RFST_SCAL;
-		RFST = RFST_SRX;
+	RFST = RFST_SCAL;
+	RFST = RFST_SRX;
 
-		/* wait for calibration */
-		sleepMillis(2);
+	/* wait for calibration */
+	sleepMillis(2);
 
-		/* store frequency/calibration settings */
-		chan_table[ch].freq2 = FREQ2;
-		chan_table[ch].freq1 = FREQ1;
-		chan_table[ch].freq0 = FREQ0;
-		chan_table[ch].fscal3 = FSCAL3;
-		chan_table[ch].fscal2 = FSCAL2;
-		chan_table[ch].fscal1 = FSCAL1;
+	/* store frequency/calibration settings */
+	chan_table[ch].freq2 = FREQ2;
+	chan_table[ch].freq1 = FREQ1;
+	chan_table[ch].freq0 = FREQ0;
+	chan_table[ch].fscal3 = FSCAL3;
+	chan_table[ch].fscal2 = FSCAL2;
+	chan_table[ch].fscal1 = FSCAL1;
 
-		/* get initial RSSI measurement */
-		chan_table[ch].ss = (RSSI ^ 0x80);
-		chan_table[ch].max = 0;
+	/* get initial RSSI measurement */
+	chan_table[ch].ss[sweep] = (RSSI ^ 0x80);
+	chan_table[ch].max = 0;
 
-		RFST = RFST_SIDLE;
+	RFST = RFST_SIDLE;
 }
 
 #define UPPER(a, b, c)  ((((a) - (b) + ((c) / 2)) / (c)) * (c))
@@ -238,6 +250,7 @@ u16 set_center_freq(u16 freq) {
 	u16 next_down;
 	u8 next_band_up;
 	u8 next_band_down;
+	u8 i;
 
 	switch (width) {
 	case NARROW:
@@ -328,6 +341,8 @@ u16 set_center_freq(u16 freq) {
 	while (hz <= max_hz && max_chan < NUM_CHANNELS) {
 		calibrate_freq(hz, max_chan);
 		hz += spacing;
+		for (i = 0; i < persistence; i++)
+			chan_table[max_chan].ss[i] = 0;
 		max_chan++;
 	}
 
@@ -337,6 +352,8 @@ u16 set_center_freq(u16 freq) {
 	while (hz >= min_hz && min_chan > 0) {
 		min_chan--;
 		calibrate_freq(hz, min_chan);
+		for (i = 0; i < persistence; i++)
+			chan_table[min_chan].ss[i] = 0;
 		hz -= spacing;
 	}
 
@@ -433,6 +450,20 @@ void poll_keyboard() {
 	case 'M':
 		max_hold = !max_hold;
 		break;
+	case ' ':
+		/* pause */
+		while (getkey() == ' ');
+		while (getkey() != ' ')
+			sleepMillis(200);
+		break;
+	case 'P':
+		if (persistence == 1)
+			persistence = PERSIST;
+		else
+			persistence = 1;
+		set_center_freq(center_freq);
+		sweep %= persistence;
+		break;
 	case KPWR:
 		sleepy = 1;
 		break;
@@ -456,6 +487,8 @@ reset:
 	vscroll = 0;
 	min_chan = 0;
 	max_chan = NUM_CHANNELS - 1;
+	sweep = 0;
+	persistence = 1;
 
 	xtalClock();
 	setIOPorts();
@@ -465,6 +498,35 @@ reset:
 	set_width(WIDE);
 
 	while (1) {
+		poll_keyboard();
+
+		if (user_freq != center_freq)
+			user_freq = set_center_freq(user_freq);
+
+		/* go to sleep (more or less a shutdown) if power button pressed */
+		if (sleepy) {
+			clear();
+			sleepMillis(1000);
+			SSN = LOW;
+			LCDPowerSave();
+			SSN = HIGH;
+
+			while (1) {
+				sleep();
+
+				/* power button depressed long enough to wake? */
+				sleepy = 0;
+				for (i = 0; i < DEBOUNCE_COUNT; i++) {
+					sleepMillis(DEBOUNCE_PERIOD);
+					if (keyscan() != KPWR) sleepy = 1;
+				}
+				if (!sleepy) break;
+			}
+
+			/* reset on wake */
+			goto reset;
+		}
+
 		for (ch = min_chan; ch < max_chan; ch++) {
 			/* tune radio and start RX */
 			tune(ch);
@@ -478,9 +540,9 @@ reset:
 				for (i = 350; i-- ;);
 
 			/* read RSSI */
-			chan_table[ch].ss = (RSSI ^ 0x80);
+			chan_table[ch].ss[sweep] = (RSSI ^ 0x80);
 			if (max_hold)
-				chan_table[ch].max = MAX(chan_table[ch].ss,
+				chan_table[ch].max = MAX(chan_table[ch].ss[sweep],
 						chan_table[ch].max);
 			else
 				chan_table[ch].max = 0;
@@ -489,21 +551,7 @@ reset:
 			RFST = RFST_SIDLE;
 		}
 
-		poll_keyboard();
-
-		/* go to sleep (more or less a shutdown) if power button pressed */
-		if (sleepy) {
-			clear();
-			sleepMillis(1000);
-			SSN = LOW;
-			LCDPowerSave();
-			SSN = HIGH;
-			sleep();
-			/* reset on wake */
-			goto reset;
-		}
-
-		if (user_freq != center_freq)
-			user_freq = set_center_freq(user_freq);
+		++sweep;
+		sweep %= persistence;
 	}
 }

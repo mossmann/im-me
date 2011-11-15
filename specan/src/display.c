@@ -83,30 +83,31 @@ void LCDReset(void) {
 	sleepMillis(1);
 	LCDRst = HIGH;
 	SSN = LOW;
-	// send the initialisation commands to the LCD display
-	txCtl(0xe2); // RESET cmd
-	txCtl(0x24); // set internal resistor ratio
-	txCtl(0x81); // set Vol Control
-	txCtl(0x60); // set Vol Control - ctd
-	txCtl(0xe6); // ?? -- don't know what this command is
-	txCtl(0x00); // ?? -- don't know what this command is
-	txCtl(0x2f); // set internal PSU operating mode
-	txCtl(0xa1); // LCD bias set
-	txCtl(0xaf); // Display ON
-	txCtl(0xa4); // Normal (not all pixels) mode
+	/* initialization sequence from sniffing factory firmware */
+	txCtl(RESET);
+	txCtl(SET_REG_RESISTOR);
+	txCtl(VOLUME_MODE_SET);
+	txCtl(0x60); /* contrast */
+	txCtl(DC_DC_CLOCK_SET);
+	txCtl(0x00); /* fOSC (no division) */
+	txCtl(POWER_SUPPLY_ON);
+	txCtl(ADC_REVERSE);
+	txCtl(DISPLAY_ON);
+	txCtl(ALL_POINTS_NORMAL);
 	SSN = HIGH;
 }
 
-void LCDPowerSave() { // not tested yet; taken from spi trace
-	txCtl(0xac); // static indicator off cmd
-	txCtl(0xae); // LCD off
-	txCtl(0xa5); // Display all Points on cmd = Power Save when following LCD off
+/* initiate sleep mode */
+void LCDPowerSave() {
+	txCtl(STATIC_INDIC_OFF);
+	txCtl(DISPLAY_OFF);
+	txCtl(ALL_POINTS_ON); // Display all Points on cmd = Power Save when following LCD off
 }
 
 void setCursor(unsigned char row, unsigned char col) {
-	txCtl(0xb0 + row); // set cursor row
-	txCtl(0x00 + (col & 0x0f)); // set cursor col low
-	txCtl(0x10 + ( (col>>4) & 0x0f)); // set cursor col high
+	txCtl(SET_ROW | (row & 0x0f));
+	txCtl(SET_COL_LO | (col & 0x0f));
+	txCtl(SET_COL_HI | ( (col>>4) & 0x0f));
 }
 
 void setDisplayStart(unsigned char start) {
@@ -114,7 +115,7 @@ void setDisplayStart(unsigned char start) {
 }
 
 void setNormalReverse(unsigned char normal) {  // 0 = Normal, 1 = Reverse
-	txCtl(0xa6 | (normal & 0x01) );
+	txCtl(DISPLAY_NORMAL | (normal & 0x01) );
 }
 
 /* clear all LCD pixels */
