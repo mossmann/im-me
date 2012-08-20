@@ -10,5 +10,6 @@ transmitted by the remote (out of range of the garage), then the code can be
 replayed to open the garage door.
 
 For my demonstration, I used a USRP and GNU Radio to acquire the signal to be
-replayed.  I used GNU Radio Companion and garage.grc to decode the signal.  The
-input data was acquired at 390 MHz with a sample rate of 500 ksps.
+replayed.  I used garage.grc (with GNU Radio Companion) and garage-decode.py to
+decode the signal.  The input data was acquired at 390 MHz with a sample rate
+of 500 ksps.
