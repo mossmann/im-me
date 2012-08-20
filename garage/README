@@ -1,0 +1,14 @@
+This rudimentary code has been used to demonstrate opening of a garage door
+with an IM-Me.  It may be useful as sample code for the transmission of Remote
+Keyless Entry (RKE) signals or other On-Off Keying (OOK) signals.
+
+The opensesame firmware implements the transmission of a fixed (hard coded)
+code to the garage door opener.  Modern garage door openers use a rolling code.
+This software does not implement rolling codes.  However, a fixed code can be
+used once in a replay attack.  If an attacker can record a single code
+transmitted by the remote (out of range of the garage), then the code can be
+replayed to open the garage door.
+
+For my demonstration, I used a USRP and GNU Radio to acquire the signal to be
+replayed.  I used GNU Radio Companion and garage.grc to decode the signal.  The
+input data was acquired at 390 MHz with a sample rate of 500 ksps.
