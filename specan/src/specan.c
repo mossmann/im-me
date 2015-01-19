@@ -26,14 +26,14 @@
 #include "pm.h"
 
 /* globals */
-xdata channel_info chan_table[NUM_CHANNELS];
+__xdata channel_info chan_table[NUM_CHANNELS];
 u16 center_freq;
 u16 user_freq;
 u8 band;
 u8 width;
-bit max_hold;
-bit height;
-bit sleepy;
+__bit max_hold;
+__bit height;
+__bit sleepy;
 u8 vscroll;
 u8 min_chan;
 u8 max_chan;
