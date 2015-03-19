@@ -1,9 +1,13 @@
+#define BAUDRATE 5000
+#define FREQ 390000000 // frequency in Hz (390MHz)
+#define CC1110
+
 #include <cc1110.h>
 #include "ioCCxx10_bitdef.h"
 #include "display.h"
 #include "keys.h"
-#include "5x7.h"
 #include "stdio.h"
+#include "helpers.h"
 
 #define HIBYTE(a)     (u8) ((u16)(a) >> 8 )
 #define LOBYTE(a)     (u8)  (u16)(a)
@@ -38,11 +42,11 @@ typedef struct {
 
 static volatile u8 txdone = 0;
 
-xdata DMA_DESC dmaConfig;
+__xdata DMA_DESC dmaConfig;
 
 /* raw ook code captured from garage door opener */
 #define LEN 29
-xdata u8 buf[] = {
+__xdata u8 buf[] = {
 	0xaa, 0xaa, 0xaa, 0x00, 0x4d, 0x34, 0xd3,
 	0x49, 0x36, 0xd2, 0x49, 0xb6, 0xda, 0x6d,
 	0x34, 0xdb, 0x69, 0xb4, 0x92, 0x69, 0x36,
@@ -84,14 +88,11 @@ int main(void)
     FSCTRL0   = 0x00;
 
 	/* 390 MHz */
-	FREQ2     = 0x0F;
-	FREQ1     = 0x00;
-	FREQ0     = 0x00;
+	setFreq(FREQ, &FREQ2, &FREQ1, &FREQ0);
     CHANNR    = 0x00;
 
 	/* maximum channel bandwidth, 5000 baud */
-    MDMCFG4   = 0x07;
-    MDMCFG3   = 0x93;
+		setBaud(BAUDRATE, &MDMCFG4, &MDMCFG3);
 
 	/* DC blocking enabled, OOK/ASK */
 	MDMCFG2   = 0x30; // no preamble/sync
@@ -160,7 +161,8 @@ int main(void)
 
     	RFST = RFST_SIDLE;
 
-		sleepMillis(1000);
+		sleepMillis(500);
+		txdone = 0;
 	}
 }
 
