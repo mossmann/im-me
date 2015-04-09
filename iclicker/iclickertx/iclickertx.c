@@ -61,11 +61,11 @@ static const u8 channel_table[4][4] = { {46, 30, 34, 38},
 
 static volatile u8 txdone = 0;
 
-xdata DMA_DESC dmaConfig;
+__xdata DMA_DESC dmaConfig;
 
 /* code captured from iclicker */
 #define LEN 7
-xdata u8 buf[] = {
+__xdata u8 buf[] = {
 	0xb0, // really a third byte of sync, but cc1110 only allows 2 or 4
 	0xaf, 0xa2, 0xbf, 0x5a, 0x2b, 0xa0 //last 5 bits are extraneous
 };

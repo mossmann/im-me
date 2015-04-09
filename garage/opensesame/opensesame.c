@@ -2,7 +2,6 @@
 #include "ioCCxx10_bitdef.h"
 #include "display.h"
 #include "keys.h"
-#include "5x7.h"
 #include "stdio.h"
 
 #define HIBYTE(a)     (u8) ((u16)(a) >> 8 )
@@ -38,11 +37,11 @@ typedef struct {
 
 static volatile u8 txdone = 0;
 
-xdata DMA_DESC dmaConfig;
+__xdata DMA_DESC dmaConfig;
 
 /* raw ook code captured from garage door opener */
 #define LEN 29
-xdata u8 buf[] = {
+__xdata u8 buf[] = {
 	0xaa, 0xaa, 0xaa, 0x00, 0x4d, 0x34, 0xd3,
 	0x49, 0x36, 0xd2, 0x49, 0xb6, 0xda, 0x6d,
 	0x34, 0xdb, 0x69, 0xb4, 0x92, 0x69, 0x36,

@@ -21,22 +21,21 @@
 #include "ioCCxx10_bitdef.h"
 #include "display.h"
 #include "keys.h"
-#include "5x7.h"
 #include "stdio.h"
 #include "isniffer.h"
 #include "pm.h"
 
 /* globals */
-bit sleepy;
+__bit sleepy;
 static volatile u8 rxdone = 0;
-xdata DMA_DESC dmaConfig;
+__xdata DMA_DESC dmaConfig;
 u16 pktcount = 0;
 
 //#define NUM_CLICKERS 100
 //xdata clicker clicker_table[NUM_CLICKERS];
 
 #define LEN 9
-xdata u8 rxbuf[LEN];
+__xdata u8 rxbuf[LEN];
 
 void setup_dma_rx()
 {
