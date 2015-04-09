@@ -1,8 +1,13 @@
+#define BAUDRATE 5000
+#define FREQ 390000000 // frequency in Hz (390MHz)
+#define CC1110
+
 #include <cc1110.h>
 #include "ioCCxx10_bitdef.h"
 #include "display.h"
 #include "keys.h"
 #include "stdio.h"
+#include "helpers.h"
 
 #define HIBYTE(a)     (u8) ((u16)(a) >> 8 )
 #define LOBYTE(a)     (u8)  (u16)(a)
@@ -83,14 +88,11 @@ int main(void)
     FSCTRL0   = 0x00;
 
 	/* 390 MHz */
-	FREQ2     = 0x0F;
-	FREQ1     = 0x00;
-	FREQ0     = 0x00;
+	setFreq(FREQ, &FREQ2, &FREQ1, &FREQ0);
     CHANNR    = 0x00;
 
 	/* maximum channel bandwidth, 5000 baud */
-    MDMCFG4   = 0x07;
-    MDMCFG3   = 0x93;
+		setBaud(BAUDRATE, &MDMCFG4, &MDMCFG3);
 
 	/* DC blocking enabled, OOK/ASK */
 	MDMCFG2   = 0x30; // no preamble/sync
@@ -159,7 +161,8 @@ int main(void)
 
     	RFST = RFST_SIDLE;
 
-		sleepMillis(1000);
+		sleepMillis(500);
+		txdone = 0;
 	}
 }
 
