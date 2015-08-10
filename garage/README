@@ -1,3 +1,9 @@
+This is ancient code.  For a harder, better, faster, stronger implementation,
+check out Samy's version:
+
+http://samy.pl/opensesame/
+
+
 This rudimentary code has been used to demonstrate opening of a garage door
 with an IM-Me.  It may be useful as sample code for the transmission of Remote
 Keyless Entry (RKE) signals or other On-Off Keying (OOK) signals.
